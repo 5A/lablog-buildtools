@@ -1,0 +1,25 @@
+{
+  "api": {
+    "restful": {
+      "protocol": "https://",
+      "host": "blogapi.zzi.io",
+      "port": 443,
+      "endpoint": "/"
+    },
+    "authentication": {
+      "username": "",
+      "password": "",
+      "access_token": "",
+      "token_type": "bearer",
+      "force_reauthentication": false
+    }
+  },
+  "paths": {
+    "post_template_file": "./post_template.html",
+    "posts_input_directory": "../posts/",
+    "posts_output_directory": "../frontend/posts/",
+    "sitemap_output_file": "../frontend/public/sitemap.txt",
+    "buffered_posts_json_file": "../frontend/public/posts.json",
+    "npm_build_working_directory": "../frontend/"
+  }
+}

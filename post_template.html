@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="/src/main.css" rel="stylesheet" />
+    <title>{BLOG_POST_TITLE}</title>
+  </head>
+  <body>
+    <header
+      class="m-4 p-4 border-2 rounded-lg border-black flex justify-between"
+    >
+      <div class="relative left-0 my-auto">
+        <h1 class="font-bold text-2xl"><a href="/">Zi</a></h1>
+        <p class="text-gray-600">Poke 49233, 0</p>
+      </div>
+      <div class="relative right-0 my-auto">
+        <address class="author">
+          By
+          <a rel="author" href="mailto:{AUTHOR_EMAIL}"> {BLOG_POST_AUTHOR} </a>
+        </address>
+        on
+        <time pubdate datetime="{BLOG_POST_DATE_MACHINE_READABLE}">
+          {BLOG_POST_DATE_STRING}
+        </time>
+      </div>
+    </header>
+    <main>
+      <div class="m-4 p-4 border-2 rounded-lg border-black">
+        <article
+          class="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert mx-auto px-4 py-4 max-w-fit antialiased"
+        >
+          {BLOG_POST_CONTENT}
+        </article>
+      </div>
+    </main>
+    <footer
+      class="m-4 p-4 border-2 rounded-lg border-black flex justify-between"
+    >
+      <div class="my-auto relative left-0">
+        <p>Tags: {BLOG_POST_TAGS_STRING}</p>
+        <p>Catagory: {BLOG_POST_CATAGORY}</p>
+      </div>
+      <div class="my-auto relative right-0">
+        <nav>
+          <a
+            class="twitter-share-button"
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://x.com/intent/tweet?text={SHARE_POST_PRESET}"
+          >
+            Share on X
+          </a>
+        </nav>
+      </div>
+    </footer>
+    <div class="m-4 p-4 border-2 rounded-lg border-black">
+      <div id="comment-app"></div>
+      <div id="post-id" class="hidden">{BLOG_POST_ID}</div>
+      <a id="comments-location" href="{COMMENTS_LOCATION}" class="hidden">{COMMENTS_LOCATION}</a>
+    </div>
+    <footer class="m-4 p-4 flex justify-between">
+      <nav class="text-gray-500">
+        <a href="/">Zi</a>
+        / ©2024 zzi.io /
+        <a href="https://github.com/5A/lablog">lablog 1.0.0</a> / CC-BY 4.0
+      </nav>
+    </footer>
+    <script type="module" src="/src/comment.ts"></script>
+  </body>
+</html>
