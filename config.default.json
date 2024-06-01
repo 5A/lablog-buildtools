@@ -15,11 +15,17 @@
     }
   },
   "paths": {
+    "temporary_files_directory": "./temp/",
     "post_template_file": "./post_template.html",
     "posts_input_directory": "../posts/",
     "posts_output_directory": "../frontend/posts/",
+    "static_files_output_directory": "../frontend/public/static/",
     "sitemap_output_file": "../frontend/public/sitemap.txt",
     "buffered_posts_json_file": "../frontend/public/posts.json",
-    "npm_build_working_directory": "../frontend/"
+    "npm_build_working_directory": "../frontend/",
+    "frontend_dist_files": "../frontend/dist/*",
+    "remote_html_directory": "www@blog.zzi.io:/var/www/html/",
+    "comment_API_base_location": "https://blogapi.zzi.io/comments/",
+    "posts_web_root_location": "https://blog.zzi.io/posts/"
   }
 }

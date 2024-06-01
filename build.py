@@ -1,19 +1,33 @@
 import subprocess
 import json
 import os
+import shutil
 from datetime import datetime
-
+import logging
 # This package
 from lablog_api import LablogAPI
 from data_model import PostMetadata
-from config import load_config_from_file
+from config import load_config_from_file, BuildConfig
+from logging_formatter import BuildtoolsLogFormatter
+
+# configure root logger to output all logs to stdout
+lg = logging.getLogger()
+lg.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(BuildtoolsLogFormatter())
+lg.addHandler(ch)
+# configure logger for this module.
+lg = logging.getLogger(__name__)
 
 
 class LablogPostBuilder:
-    def __init__(self, post_path: str, temp_dir: str = "./temp/") -> None:
+    def __init__(self, post_path: str, config: BuildConfig) -> None:
+        self.pcfg = config.paths
         self.post_path = post_path
-        self.temp_dir = temp_dir
+        self.temp_dir = self.pcfg.temporary_files_directory
         # load metadata
+        lg.info(f"Loading metadata for post at {post_path}")
         file_in = f"{post_path}/meta.json"
         with open(file_in, 'rb') as f:
             post_meta = f.read().decode('utf-8')
@@ -37,19 +51,26 @@ class LablogPostBuilder:
         if self.post_meta.tags is None:
             self.post_meta.tags = []
         # Create perm link to insert into share buttons
-        self.perm_link = "https://zzi.io/posts/" + \
+        self.perm_link = self.pcfg.posts_web_root_location + \
             self.post_meta.root + ".html"
         self.share_post_preset = self.perm_link
 
     def pandoc_convert_post_to_html(self):
         file_in = f"{self.post_path}/post.md"
         file_out: str = self.temp_dir + "post_content.html"
-        args = ['./bin/pandoc.exe', file_in, '-o', file_out]
+        args = ['./bin/pandoc.exe', file_in,
+                '--lua-filter', './post_filter.lua',
+                '-M', f'image-base-path=/static/{self.post_meta.root}/',
+                '-M', f'link-base-path=/static/{self.post_meta.root}/',
+                '-o', file_out]
         pandoc_result = subprocess.run(args, capture_output=True)
-        print(pandoc_result)
+        lg.info("PANDOC OUTPUT: ")
+        lg.info(pandoc_result.stdout.decode())
+        lg.info("END OF PANDOC OUTPUT")
 
     def insert_html_into_template(self, post_template: str, output_directory: str):
         # Read HTML containing content of the post
+        lg.info("Reading HTML fragment from temporary file")
         file_in = self.temp_dir + "post_content.html"
         with open(file_in, 'rb') as f:
             post_content = f.read().decode('utf-8')
@@ -66,10 +87,11 @@ class LablogPostBuilder:
             BLOG_POST_CATAGORY=self.post_meta.catagory,
             SHARE_POST_PRESET=self.share_post_preset,
             BLOG_POST_ID=self.post_meta.post_id,
-            COMMENTS_LOCATION="http://dev.zzi.io:8000/comments/" + self.post_meta.post_id
+            COMMENTS_LOCATION=self.pcfg.comment_API_base_location + self.post_meta.post_id
         )
 
         file_out = output_directory + self.post_meta.root + ".html"
+        lg.info(f"Writing templated HTML source to {file_out}")
         with open(file_out, 'wb') as f:
             f.write(filled_result.encode('utf-8'))
 
@@ -95,39 +117,95 @@ class LablogPostBuilder:
                     indent=2).encode('utf-8'))
         return post_id
 
+    def copy_static_files(self):
+        # select all directories in post folder
+        directories_in = [d for d in next(os.walk(self.post_path))[1]]
+        if len(directories_in) == 0:
+            lg.info("No static files found, skipping.")
+            return
+        lg.info(f"Copying static files from: {directories_in}")
+        directory_out = f"{
+            self.pcfg.static_files_output_directory}{self.post_meta.root}/"
+        lg.info(f"COPY TO: {directory_out}")
+        if os.path.exists(directory_out):
+            lg.warning(
+                f"Directory {directory_out} already exists, deleting it before copying.")
+            shutil.rmtree(directory_out)
+        os.makedirs(directory_out, exist_ok=True)
+        for directory in directories_in:
+            copy_from = self.post_path + '/' + directory
+            copy_to = directory_out + directory
+            lg.info(f"Copying from {copy_from} to {copy_to}")
+            shutil.copytree(copy_from, copy_to)
+
 
 class LablogBuilder:
     def __init__(self) -> None:
-        self.config = load_config_from_file().paths
+        lg.info("Loading buildtools config from config.json")
+        self.config = load_config_from_file()
+        lg.info("Config loaded.")
+        self.pcfg = self.config.paths
         # Load template
-        with open(self.config.post_template_file, 'rb') as f:
+        lg.info(f"Loading template file from {self.pcfg.post_template_file}")
+        with open(self.pcfg.post_template_file, 'rb') as f:
             self.post_template = f.read().decode('utf-8')
+        lg.info("Connecting to Lablog API")
         self.api = LablogAPI()
-        self.post_paths = [self.config.posts_input_directory +
-                           d for d in next(os.walk(self.config.posts_input_directory))[1]]
+        lg.info(f"API Connected, scanning for posts from {
+                self.pcfg.posts_input_directory}")
+        self.post_paths = [self.pcfg.posts_input_directory +
+                           d for d in next(os.walk(self.pcfg.posts_input_directory))[1]]
+        lg.debug("Posts found: ")
+        for post_path in self.post_paths:
+            lg.debug(post_path)
 
     def build_posts(self):
+        lg.warning("Start to build all posts...")
+
         sitemap = []
+
         for post_path in self.post_paths:
-            pb = LablogPostBuilder(post_path=post_path)
+            lg.warning(f"Building post from {post_path}")
+            pb = LablogPostBuilder(post_path=post_path, config=self.config)
+            lg.info("Calling pandoc to convert post MD to HTML fragment")
             pb.pandoc_convert_post_to_html()
+            lg.info(
+                "Conversion done, registering the post at remote server backend...")
             pb.register_post_at_backend(self.api)
+            lg.info("Registering OK, constructing HTML source from template")
             pb.insert_html_into_template(
                 post_template=self.post_template,
-                output_directory=self.config.posts_output_directory)
+                output_directory=self.pcfg.posts_output_directory)
+            lg.info("HTML source built, copying static files to output")
+            pb.copy_static_files()
             sitemap.append(pb.perm_link)
-        with open(self.config.sitemap_output_file, 'wb') as f:
+
+        lg.warning("All posts built.")
+
+        lg.info(f"Writing sitemap.txt to {self.pcfg.sitemap_output_file}")
+        with open(self.pcfg.sitemap_output_file, 'wb') as f:
             f.write('\n'.join(sitemap).encode('utf-8'))
-        with open(self.config.buffered_posts_json_file, 'wb') as f:
+
+        lg.info(f"Writing buffered post information to {
+                self.pcfg.buffered_posts_json_file}")
+        with open(self.pcfg.buffered_posts_json_file, 'wb') as f:
             f.write(json.dumps(self.api.get_posts()).encode('utf-8'))
 
+        lg.info(f"Calling npm build in working dir {
+                self.pcfg.npm_build_working_directory}")
         npm_build_result = subprocess.run(
-            ['npm', 'run', 'build'], cwd=self.config.npm_build_working_directory, shell=True)
+            ['npm', 'run', 'build'], cwd=self.pcfg.npm_build_working_directory, shell=True)
         print(npm_build_result)
 
     def deploy(self):
-        pass
+        lg.warning("Deploying build results to remote server")
+        lg.warning("Copying files...")
+        subprocess.run(
+            ['scp', '-r', self.pcfg.frontend_dist_files,
+                self.pcfg.remote_html_directory],
+            shell=True)
 
 
 lb = LablogBuilder()
 lb.build_posts()
+lb.deploy()
