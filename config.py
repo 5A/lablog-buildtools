@@ -47,8 +47,20 @@ class BuildPathConfig(BaseModel):
     post_template_file: str
     # where to find input posts
     posts_input_directory: str
-    # where to export build results
+    # where to export build results for pages
     posts_output_directory: str
+    # link location used to generate permenant links for the post, 
+    # to be used in places like sitemap.txt, share buttons, etc.
+    posts_web_root_location: str
+    # the template HTML file for pages used to generate final HTML file
+    page_template_file: str
+    # where to find input pages
+    pages_input_directory: str
+    # where to export build results for pages
+    pages_output_directory: str
+    # link location used to generate permenant links for the page,
+    # to be used in places like sitemap.txt
+    pages_web_root_location: str
     # where to copy static files (images, attachments, etc.) to
     static_files_output_directory: str
     # a sitemap.txt is generated, which contains links to all built posts.
@@ -66,9 +78,6 @@ class BuildPathConfig(BaseModel):
     remote_html_directory: str
     # link location embedded in the generated HTML file for creating and getting comments.
     comment_API_base_location: str
-    # link location used to generate permenant links for the post, 
-    # to be used in places like sitemap.txt, share buttons, etc.
-    posts_web_root_location: str
 
 
 class BuildConfig(BaseModel):

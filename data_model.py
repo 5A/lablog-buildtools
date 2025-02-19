@@ -13,3 +13,8 @@ class PostMetadata(BaseModel):
     catagory: Optional[str] = None
     tags: Optional[list[str]] = None
     post_id: Optional[str] = None
+
+
+class PageMetadata(BaseModel):
+    title: str
+    root: str

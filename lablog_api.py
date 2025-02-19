@@ -120,7 +120,7 @@ class LablogAPI():
         self.config.api.authentication.access_token = result["access_token"]
         self.config.api.authentication.token_type = result["token_type"]
         self.auth_header = result["token_type"] + " " + result["access_token"]
-        dump_config_to_file(self.config.api)
+        dump_config_to_file(self.config)
 
     def get_posts(self):
         response = requests.get(self.restful_endpoint + "posts")

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="/src/main.css" rel="stylesheet" />
+    <title>{BLOG_PAGE_TITLE}</title>
+  </head>
+  <body>
+    <header
+      class="m-4 p-4 border-2 rounded-lg border-black flex justify-between"
+    >
+      <div class="relative left-0 my-auto">
+        <h1 class="font-bold text-2xl"><a href="/">Zi</a></h1>
+        <p class="text-gray-600">Poke 49233, 0</p>
+      </div>
+      <div class="relative right-0 my-auto"></div>
+    </header>
+    <main>
+      <div class="m-4 p-4 border-2 rounded-lg border-black">
+        <article
+          class="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert mx-auto px-4 py-4 max-w-fit antialiased"
+        >
+          {BLOG_PAGE_CONTENT}
+        </article>
+      </div>
+    </main>
+    <footer class="m-4 p-4 flex justify-between">
+      <nav class="text-gray-500">
+        <a href="/">Zi</a>
+        / ©2024 zzi.io /
+        <a href="https://github.com/5A/lablog">lablog 1.0.0</a> / CC-BY 4.0
+      </nav>
+    </footer>
+    <script type="module" src="/src/comment.ts"></script>
+  </body>
+</html>
